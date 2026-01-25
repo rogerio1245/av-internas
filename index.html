@@ -1,4 +1,3 @@
-
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -99,6 +98,18 @@
             color: #95a5a6;
             font-size: 1rem;
             margin-top: 10px;
+        }
+
+        /* Novo elemento para o nome da escola extraído da planilha */
+        .extracted-school-name {
+            color: #2196F3;
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin: 15px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #2196F3;
         }
         
         /* Controles Comuns */
@@ -807,9 +818,12 @@
             </div>
         </div>
         
-        <!-- Cabeçalho (MANTIDO IGUAL) -->
+        <!-- Cabeçalho (MODIFICADO para exibir nome da escola extraído da planilha) -->
         <div class="school-header">
-            <h1>ESCOLA NOSSA SENHORA DA PIEDADE</h1>
+            <h1 id="schoolNameDisplay">ESCOLA NOSSA SENHORA DA PIEDADE</h1>
+            <div class="extracted-school-name" id="extractedSchoolName" style="display: none;">
+                📚 <span id="schoolNameText">Nome da escola carregado da planilha</span>
+            </div>
             <h2>SISTEMA DE RELATÓRIOS ACADÊMICOS</h2>
             <h3>Análise de Desempenho Escolar</h3>
             <div class="date" id="currentDate"></div>
@@ -835,14 +849,14 @@
                 <div style="text-align: center; margin-top: 30px;">
                     <h3>Instruções:</h3>
                     <p style="color: #666; max-width: 800px; margin: 10px auto;">
-                       
+                        O nome da escola será automaticamente extraído da célula G3 da guia "CABEÇALHO" da planilha.
                         Após importar, use o menu acima para navegar entre os relatórios.
                     </p>
                 </div>
             </div>
         </div>
         
-        <!-- Seção do Relatório 1 (Geral) (MANTIDO IGUAL) -->
+        <!-- Seção do Relatório 1 (Geral) (MODIFICADO para exibir nome da escola) -->
         <div id="report1Section" class="report-section">
             <div class="card">
                 <h2>Relatório Geral de Desempenho</h2>
@@ -871,11 +885,16 @@
                     </div>
                 </div>
                 
+                <!-- Área onde o nome da escola será exibido no Relatório Geral -->
+                <div class="report-title-container" style="text-align: center; margin: 20px 0;">
+                    <h3 id="report1Title">Notas Individuais</h3>
+                </div>
+                
                 <div id="report1Container"></div>
             </div>
         </div>
         
-        <!-- Seção do Relatório 2 (Detalhado) (MANTIDO IGUAL) -->
+        <!-- Seção do Relatório 2 (Detalhado) (MODIFICADO para exibir nome da escola) -->
         <div id="report2Section" class="report-section">
             <div class="card">
                 <h2>Relatório Detalhado por Aluno</h2>
@@ -910,11 +929,16 @@
                     </div>
                 </div>
                 
+                <!-- Área onde o nome da escola será exibido no Relatório Detalhado -->
+                <div class="report-title-container" style="text-align: center; margin: 20px 0;">
+                    <h3 id="report2Title">Relatório Detalhado</h3>
+                </div>
+                
                 <div id="report2Container"></div>
             </div>
         </div>
         
-        <!-- Seção do Relatório 3 (Consolidado) (MANTIDO IGUAL) -->
+        <!-- Seção do Relatório 3 (Consolidado) (MODIFICADO para exibir nome da escola) -->
         <div id="report3Section" class="report-section">
             <div class="card">
                 <h2>Relatório Consolidado por Exercício</h2>
@@ -949,11 +973,16 @@
                     </div>
                 </div>
                 
+                <!-- Área onde o nome da escola será exibido no Relatório Consolidado -->
+                <div class="report-title-container" style="text-align: center; margin: 20px 0;">
+                    <h3 id="report3Title">Relatório Consolidado</h3>
+                </div>
+                
                 <div id="report3Container"></div>
             </div>
         </div>
         
-        <!-- Seção do Relatório 4 (Gráfico de Desempenho) (MANTIDO IGUAL) -->
+        <!-- Seção do Relatório 4 (Gráfico de Desempenho) (MODIFICADO para exibir nome da escola) -->
         <div id="report4Section" class="report-section">
             <div class="card">
                 <h2>Gráfico de Desempenho por Exercício</h2>
@@ -988,12 +1017,17 @@
                     </div>
                 </div>
                 
+                <!-- Área onde o nome da escola será exibido no Gráfico -->
+                <div class="report-title-container" style="text-align: center; margin: 20px 0;">
+                    <h3 id="report4Title">Gráfico de Desempenho</h3>
+                </div>
+                
                 <div id="report4Container"></div>
             </div>
         </div>
         
         <div class="footer">
-            <p>Sistema de Relatórios Escolares &copy; 2023 - Escola Nossa Senhora da Piedade</p>
+            <p>Sistema de Relatórios Escolares &copy; 2023 - <span id="footerSchoolName">Escola Nossa Senhora da Piedade</span></p>
         </div>
     </div>
 
@@ -1001,6 +1035,7 @@
         // ==================== VARIÁVEIS GLOBAIS ====================
         let workbookData = null;
         let globalNumQuestoes = 26; // VARIÁVEL GLOBAL PARA NÚMERO DE QUESTÕES
+        let schoolName = ''; // VARIÁVEL GLOBAL PARA O NOME DA ESCOLA
         
         // Dados para Relatório 1
         let allStudents = [];
@@ -1029,6 +1064,70 @@
         let chartInstance4 = null;
         
         // ==================== FUNÇÕES AUXILIARES (NOVAS) ====================
+        
+        // Função para extrair o nome da escola da guia CABEÇALHO, célula G3
+        function extractSchoolName(workbook) {
+            try {
+                const cabecalhoSheet = workbook.Sheets['CABEÇALHO'];
+                if (!cabecalhoSheet) {
+                    console.warn('Guia CABEÇALHO não encontrada');
+                    return '';
+                }
+                
+                // Converter para matriz de dados
+                const cabecalhoData = XLSX.utils.sheet_to_json(cabecalhoSheet, {header: 1});
+                
+                // Procurar célula G3 (coluna 7, linha 2 em index 0-based)
+                // G = coluna 7, 3 = linha 3 => [2][6] em array 0-based
+                if (cabecalhoData.length > 2 && cabecalhoData[2] && cabecalhoData[2].length > 6) {
+                    const nomeEscola = cabecalhoData[2][6];
+                    if (nomeEscola && typeof nomeEscola === 'string' && nomeEscola.trim() !== '') {
+                        return nomeEscola.trim();
+                    }
+                }
+                
+                // Tentar localizar de forma mais flexível
+                for (let i = 0; i < Math.min(10, cabecalhoData.length); i++) {
+                    const row = cabecalhoData[i];
+                    if (row && row.length > 0) {
+                        for (let j = 0; j < row.length; j++) {
+                            const cell = row[j];
+                            if (cell && typeof cell === 'string') {
+                                const lowerCell = cell.toLowerCase();
+                                if (lowerCell.includes('escola') || lowerCell.includes('colégio') || lowerCell.includes('instituição')) {
+                                    // Esta pode ser a célula com o nome da escola
+                                    return cell.trim();
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                return '';
+            } catch (error) {
+                console.error('Erro ao extrair nome da escola:', error);
+                return '';
+            }
+        }
+        
+        // Função para atualizar o nome da escola na interface
+        function updateSchoolNameInUI(schoolName) {
+            if (schoolName && schoolName.trim() !== '') {
+                // Atualizar cabeçalho principal
+                document.getElementById('schoolNameDisplay').textContent = schoolName;
+                document.getElementById('extractedSchoolName').style.display = 'block';
+                document.getElementById('schoolNameText').textContent = schoolName;
+                
+                // Atualizar footer
+                document.getElementById('footerSchoolName').textContent = schoolName;
+                
+                // Atualizar títulos dos relatórios
+                document.getElementById('report1Title').textContent = `${schoolName} - Notas Individuais`;
+                document.getElementById('report2Title').textContent = `${schoolName} - Relatório Detalhado`;
+                document.getElementById('report3Title').textContent = `${schoolName} - Relatório Consolidado`;
+                document.getElementById('report4Title').textContent = `${schoolName} - Gráfico de Desempenho`;
+            }
+        }
         
         // Função para detectar número de questões dinamicamente
         function detectNumeroQuestoes(gabaritoData) {
@@ -1069,6 +1168,7 @@
         const filterControls = document.getElementById('filterControls');
         const currentFilterElement = document.getElementById('currentFilter');
         const report1Container = document.getElementById('report1Container');
+        const report1Title = document.getElementById('report1Title');
         
         // Relatório 2
         const generateReport2Btn = document.getElementById('generateReport2');
@@ -1077,6 +1177,7 @@
         const subjectButtons2 = document.querySelectorAll('#report2Section .subject-btn');
         const classSelector2 = document.getElementById('classSelector');
         const report2Container = document.getElementById('report2Container');
+        const report2Title = document.getElementById('report2Title');
         
         // Relatório 3
         const generateReport3Btn = document.getElementById('generateReport3');
@@ -1085,6 +1186,7 @@
         const subjectButtons3 = document.querySelectorAll('#subjectSelector3 .subject-btn');
         const classSelector3 = document.getElementById('classSelector3');
         const report3Container = document.getElementById('report3Container');
+        const report3Title = document.getElementById('report3Title');
         
         // Relatório 4
         const generateReport4Btn = document.getElementById('generateReport4');
@@ -1093,6 +1195,7 @@
         const subjectButtons4 = document.querySelectorAll('#subjectSelector4 .subject-btn');
         const classSelector4 = document.getElementById('classSelector4');
         const report4Container = document.getElementById('report4Container');
+        const report4Title = document.getElementById('report4Title');
         
         // ==================== FUNÇÕES DE NAVEGAÇÃO ====================
         function setupNavigation() {
@@ -1188,19 +1291,19 @@
                     switch(reportType) {
                         case 'report1':
                             data = currentStudents;
-                            defaultFileName = `Relatorio_Geral_${currentFilter || 'Turma'}_${new Date().toISOString().split('T')[0]}`;
+                            defaultFileName = `Relatorio_Geral_${schoolName.replace(/\s+/g, '_')}_${currentFilter || 'Turma'}_${new Date().toISOString().split('T')[0]}`;
                             break;
                         case 'report2':
                             data = getCurrentReport2Data();
-                            defaultFileName = `Relatorio_Detalhado_${currentSubject2}_${currentClass2}_${new Date().toISOString().split('T')[0]}`;
+                            defaultFileName = `Relatorio_Detalhado_${schoolName.replace(/\s+/g, '_')}_${currentSubject2}_${currentClass2}_${new Date().toISOString().split('T')[0]}`;
                             break;
                         case 'report3':
                             data = getCurrentReport3Data();
-                            defaultFileName = `Relatorio_Consolidado_${currentSubject3}_${currentClass3}_${new Date().toISOString().split('T')[0]}`;
+                            defaultFileName = `Relatorio_Consolidado_${schoolName.replace(/\s+/g, '_')}_${currentSubject3}_${currentClass3}_${new Date().toISOString().split('T')[0]}`;
                             break;
                         case 'report4':
                             data = getCurrentReport4Data();
-                            defaultFileName = `Grafico_Desempenho_${currentSubject4}_${currentClass4}_${new Date().toISOString().split('T')[0]}`;
+                            defaultFileName = `Grafico_Desempenho_${schoolName.replace(/\s+/g, '_')}_${currentSubject4}_${currentClass4}_${new Date().toISOString().split('T')[0]}`;
                             break;
                     }
                     
@@ -1390,7 +1493,7 @@
     </style>
 </head>
 <body>
-    <h1>Relatório Exportado - ${defaultFileName}</h1>
+    <h1>${schoolName} - ${defaultFileName}</h1>
     <p>Exportado em: ${new Date().toLocaleString('pt-BR')}</p>
     ${element.innerHTML}
 </body>
@@ -1471,6 +1574,12 @@
                     const data = new Uint8Array(e.target.result);
                     workbookData = XLSX.read(data, {type: 'array'});
                     
+                    // Extrair nome da escola da guia CABEÇALHO, célula G3
+                    schoolName = extractSchoolName(workbookData);
+                    
+                    // Atualizar interface com o nome da escola
+                    updateSchoolNameInUI(schoolName);
+                    
                     // Limpar dados anteriores
                     allStudents = [];
                     mathReports = [];
@@ -1488,7 +1597,7 @@
                     generateReport3Btn.disabled = false;
                     generateReport4Btn.disabled = false;
                     
-                    showMessage('Arquivo carregado com sucesso! Navegue para os relatórios.', 'success');
+                    showMessage(`Arquivo carregado com sucesso! Escola: ${schoolName || 'Nome não encontrado'}`, 'success');
                     
                 } catch (error) {
                     showMessage(`Erro ao processar arquivo: ${error.message}`, 'error');
@@ -1750,8 +1859,11 @@
             const portugueseAverage = portugueseCount > 0 ? (portugueseSum / portugueseCount).toFixed(2) : "0.00";
             const overallAverage = averageCount > 0 ? (averageSum / averageCount).toFixed(2) : "0.00";
             
+            // Incluir o nome da escola no título do relatório
+            const schoolTitle = schoolName ? `${schoolName} - ` : '';
+            
             let html = `
-                <h2>Relatório de Desempenho - Turma ${currentFilter}</h2>
+                <h2>${schoolTitle}Relatório de Desempenho - Turma ${currentFilter}</h2>
                 <div class="summary">
                     <div class="summary-card">
                         <h3>Média de Matemática</h3>
@@ -1775,7 +1887,7 @@
                     </div>
                 </div>
                 
-                <h3 style="margin-top: 30px;">Notas Individuais</h3>
+                <h3 style="margin-top: 30px;">${schoolTitle}Notas Individuais</h3>
                 <table>
                     <thead>
                         <tr>
@@ -2035,7 +2147,11 @@
             
             const numQuestoes = reports[0]?.numQuestoes || 26;
             
+            // Incluir o nome da escola no cabeçalho do relatório
+            const schoolHeader = schoolName ? `<div style="text-align: center; margin: 10px 0; font-weight: bold; color: #2196F3;">${schoolName}</div>` : '';
+            
             let html = `
+                ${schoolHeader}
                 <div class="current-filters">
                     <strong>Filtros aplicados:</strong> Matéria: ${currentSubject2} | Turma: ${currentClass2}
                 </div>
@@ -2383,7 +2499,7 @@
             return questoes;
         }
         
-        // Função para exibir relatório consolidado (MANTIDA IGUAL)
+        // Função para exibir relatório consolidado (MODIFICADA para incluir nome da escola)
         function displayConsolidatedReport(data) {
             if (data.length === 0) {
                 report3Container.innerHTML = `
@@ -2402,7 +2518,11 @@
             const totalAlunos = data.reduce((sum, item) => sum + parseInt(item.totalAlunos), 0);
             const percentualGeral = totalAlunos > 0 ? ((totalAcertos / totalAlunos) * 100).toFixed(2) : 0;
             
+            // Incluir o nome da escola no cabeçalho do relatório
+            const schoolHeader = schoolName ? `<div style="text-align: center; margin: 10px 0; font-weight: bold; color: #2196F3; font-size: 1.2rem;">${schoolName}</div>` : '';
+            
             let html = `
+                ${schoolHeader}
                 <div class="current-filters">
                     <strong>Filtros aplicados:</strong> Matéria: ${currentSubject3} | Turma: ${currentClass3}
                 </div>
@@ -2577,7 +2697,7 @@
             displayChart4(filteredData);
         }
         
-        // Função para exibir gráfico (Relatório 4) - MANTIDA IGUAL
+        // Função para exibir gráfico (Relatório 4) - MODIFICADA para incluir nome da escola
         function displayChart4(data) {
             if (data.length === 0) {
                 report4Container.innerHTML = `
@@ -2600,13 +2720,16 @@
             const acertosData = data.map(item => item.acertos);
             const errosData = data.map(item => item.erros);
             
+            // Incluir o nome da escola no título do gráfico
+            const schoolTitle = schoolName ? `${schoolName} - ` : '';
+            
             // Criar HTML do gráfico
             report4Container.innerHTML = `
                 <div class="current-filters">
                     <strong>Filtros aplicados:</strong> Matéria: ${currentSubject4} | Turma: ${currentClass4}
                 </div>
                 
-                <h3 class="chart-title">Desempenho por Exercício - ${currentSubject4}</h3>
+                <h3 class="chart-title">${schoolTitle}Desempenho por Exercício - ${currentSubject4}</h3>
                 
                 <div class="chart-container">
                     <canvas id="performanceChart4"></canvas>
