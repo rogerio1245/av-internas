@@ -1291,15 +1291,15 @@
                     switch(reportType) {
                         case 'report1':
                             data = currentStudents;
-                            defaultFileName = `Relatorio_Geral_${schoolName.replace(/\s+/g, '_')}_${currentFilter || 'Turma'}_${new Date().toISOString().split('T')[0]}`;
+                            //defaultFileName = `Relatorio_Geral_${schoolName.replace(/\s+/g, '_')}_${currentFilter || 'Turma'}_${new Date().toISOString().split('T')[0]}`;
                             break;
                         case 'report2':
                             data = getCurrentReport2Data();
-                            defaultFileName = `Relatorio_Detalhado_${schoolName.replace(/\s+/g, '_')}_${currentSubject2}_${currentClass2}_${new Date().toISOString().split('T')[0]}`;
+                            //defaultFileName = `Relatorio_Detalhado_${schoolName.replace(/\s+/g, '_')}_${currentSubject2}_${currentClass2}_${new Date().toISOString().split('T')[0]}`;
                             break;
                         case 'report3':
                             data = getCurrentReport3Data();
-                            defaultFileName = `Relatorio_Consolidado_${schoolName.replace(/\s+/g, '_')}_${currentSubject3}_${currentClass3}_${new Date().toISOString().split('T')[0]}`;
+                            //defaultFileName = `Relatorio_Consolidado_${schoolName.replace(/\s+/g, '_')}_${currentSubject3}_${currentClass3}_${new Date().toISOString().split('T')[0]}`;
                             break;
                         case 'report4':
                             data = getCurrentReport4Data();
